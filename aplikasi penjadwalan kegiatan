@@ -1,0 +1,96 @@
+import json
+import os
+from datetime import datetime
+
+FILE_DATA = 'data_penjadwalan.json'
+
+def muat_data():
+    if not os.path.exists(FILE_DATA):
+        return []
+    with open(FILE_DATA, 'r') as file:
+        try:
+            return json.load(file)
+        except json.JSONDecodeError:
+            return []
+
+def simpan_data(data):
+    with open(FILE_DATA, 'w') as file:
+        json.dump(data, file, indent=4)
+
+def tambah_kegiatan(data):
+    print("=== Tambah Kegiatan Baru ===")
+    kegiatan = input("Masukkan deskripsi kegiatan: ").strip()
+    while True:
+        tanggal = input("Masukkan tanggal (YYYY-MM-DD): ").strip()
+        try:
+            datetime.strptime(tanggal, '%Y-%m-%d')
+            break
+        except ValueError:
+            print("Format tanggal salah. Silakan coba lagi.")
+    while True:
+        waktu = input("Masukkan waktu (HH:MM format 24 jam): ").strip()
+        try:
+            datetime.strptime(waktu, '%H:%M')
+            break
+        except ValueError:
+            print("Format waktu salah. Silakan coba lagi.")
+
+    waktu_lengkap = f"{tanggal} {waktu}"
+    data.append({'kegiatan': kegiatan, 'waktu': waktu_lengkap})
+    data.sort(key=lambda x: datetime.strptime(x['waktu'], '%Y-%m-%d %H:%M'))
+    simpan_data(data)
+    print("Kegiatan berhasil ditambahkan!")
+
+def lihat_kegiatan(data):
+    print("=== Daftar Kegiatan Terjadwal ===")
+    if not data:
+        print("Belum ada kegiatan yang terjadwal.")
+        return
+    for i, item in enumerate(data, start=1):
+        tgl = datetime.strptime(item['waktu'], '%Y-%m-%d %H:%M')
+        print(f"{i}. {item['kegiatan']} pada {tgl.strftime('%Y-%m-%d %H:%M')}")
+
+def hapus_kegiatan(data):
+    lihat_kegiatan(data)
+    if not data:
+        return
+    try:
+        pilihan = int(input("Masukkan nomor kegiatan yang ingin dihapus (0 batal): "))
+        if pilihan == 0:
+            print("Penghapusan dibatalkan.")
+            return
+        if 1 <= pilihan <= len(data):
+            terhapus = data.pop(pilihan - 1)
+            simpan_data(data)
+            print(f"Kegiatan terhapus: {terhapus['kegiatan']} pada {terhapus['waktu']}")
+        else:
+            print("Pilihan tidak valid.")
+    except ValueError:
+        print("Input tidak valid. Harap masukkan angka.")
+
+def main():
+    data_kegiatan = muat_data()
+
+    while True:
+        print("\n=== Aplikasi Penjadwalan Kegiatan ===")
+        print("1. Tambah Kegiatan")
+        print("2. Lihat Kegiatan")
+        print("3. Hapus Kegiatan")
+        print("4. Keluar")
+        pilihan = input("Pilih menu (1-4): ").strip()
+
+        if pilihan == '1':
+            tambah_kegiatan(data_kegiatan)
+        elif pilihan == '2':
+            lihat_kegiatan(data_kegiatan)
+        elif pilihan == '3':
+            hapus_kegiatan(data_kegiatan)
+        elif pilihan == '4':
+            print("Terima kasih telah menggunakan aplikasi. Sampai jumpa!")
+            break
+        else:
+            print("Pilihan salah. Harap pilih angka 1-4.")
+
+if __name__ == "__main__":
+    main()
+
